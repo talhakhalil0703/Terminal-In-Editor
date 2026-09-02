@@ -1,11 +1,14 @@
 {
   "name": "terminal-in-editor",
   "displayName": "Terminal in Editor",
-  "description": "Moves the active integrated terminal into the editor area.",
-  "version": "0.1.1",
+  "description": "Opens the integrated terminal in the editor area from the status bar or Command Palette.",
+  "version": "0.2.0",
   "publisher": "TalhaKhalil",
   "license": "MIT",
   "icon": "media/icon.png",
+  "extensionKind": [
+    "ui"
+  ],
   "engines": {
     "vscode": "^1.109.0"
   },
@@ -13,6 +16,7 @@
     "Other"
   ],
   "activationEvents": [
+    "onStartupFinished",
     "onCommand:terminal-in-editor.attach"
   ],
   "main": "./extension.js",
