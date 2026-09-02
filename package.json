@@ -1,0 +1,30 @@
+{
+  "name": "terminal-in-editor",
+  "displayName": "Terminal in Editor",
+  "description": "Moves the active integrated terminal into the editor area.",
+  "version": "0.1.1",
+  "publisher": "TalhaKhalil",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.109.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:terminal-in-editor.attach"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "terminal-in-editor.attach",
+        "title": "Terminal: Attach to Editor"
+      }
+    ]
+  },
+  "scripts": {
+    "check": "node --check extension.js"
+  }
+}
