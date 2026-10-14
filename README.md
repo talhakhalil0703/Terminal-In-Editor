@@ -16,6 +16,19 @@ You can also click the terminal icon in the editor title, use the editor's
 right-click menu, or run **Code to Console: Copy Context and Focus Terminal**.
 **Code to Console: Copy Context** copies the same text to the clipboard.
 
+To paste automatically, enable **Code to Console: Auto Paste Context** in
+Settings, or add this to `settings.json`:
+
+```json
+{
+  "codeToConsole.autoPasteContext": true
+}
+```
+
+This setting is off by default. When enabled, the shortcut and editor action
+also paste the copied context using VS Code's normal terminal paste handling.
+The extension does not add Enter. **Copy Context** always copies only.
+
 A regular file includes its repository, path, and selected lines:
 
 ```text

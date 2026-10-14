@@ -2,7 +2,7 @@
   "name": "code-to-console",
   "displayName": "Code to Console",
   "description": "Copy file and diff references for terminal agents, and open the terminal beside your code.",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "publisher": "TalhaKhalil",
   "repository": {
     "type": "git",
@@ -37,6 +37,17 @@
   ],
   "main": "./extension.js",
   "contributes": {
+    "configuration": {
+      "title": "Code to Console",
+      "properties": {
+        "codeToConsole.autoPasteContext": {
+          "type": "boolean",
+          "default": false,
+          "scope": "window",
+          "description": "Automatically paste copied context after focusing the terminal. When disabled, leave context on the clipboard for manual paste. The extension does not add Enter."
+        }
+      }
+    },
     "commands": [
       {
         "command": "terminal-in-editor.attach",

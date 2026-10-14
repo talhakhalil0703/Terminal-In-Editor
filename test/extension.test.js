@@ -19,6 +19,17 @@ function load(options = {}) {
     sendText: () => assert.fail('Preparing context must not send terminal input'),
   };
   const vscode = {
+    workspace: {
+      getConfiguration(section) {
+        assert.equal(section, 'codeToConsole');
+        return {
+          get(name, fallback) {
+            assert.equal(name, 'autoPasteContext');
+            return options.autoPaste === undefined ? fallback : options.autoPaste;
+          },
+        };
+      },
+    },
     window: {
       activeTerminal: options.noTerminal ? undefined : terminal,
       terminals: options.noTerminal ? [] : [terminal],
@@ -117,4 +128,50 @@ test('a terminal closing while context is built cannot redirect focus to another
   assert.match(state.errors[0], /target terminal closed/);
   assert.equal(state.events.length, 0);
   assert.equal(state.clipboard(), 'previous clipboard');
+});
+
+test('automatic mode pastes the copied context after focusing the terminal', async () => {
+  const state = load({ autoPaste: true });
+  await state.commands.get('code-to-console.pasteContext')();
+  assert.equal(state.events[0], 'focus terminal');
+  assert.equal(state.events[1].command, 'workbench.action.terminal.paste');
+  assert.equal(state.events[1].text, 'context\nsecond line');
+  assert.equal(state.events.length, 2);
+  assert.equal(state.clipboard(), 'context\nsecond line');
+  assert.equal(state.errors.length, 0);
+});
+
+test('copy-only command remains copy-only with automatic mode enabled', async () => {
+  const state = load({ autoPaste: true });
+  await state.commands.get('code-to-console.copyContext')();
+  assert.equal(state.clipboard(), 'context\nsecond line');
+  assert.equal(state.events.filter(event => event.command).length, 0);
+  assert.match(state.events[0], /context copied/);
+});
+
+test('automatic paste requires a boolean true setting', async () => {
+  const state = load({ autoPaste: 'true' });
+  await state.commands.get('code-to-console.pasteContext')();
+  assert.equal(state.events.length, 1);
+  assert.equal(state.errors.length, 0);
+});
+
+test('automatic mode cannot paste text copied by another action during focus', async () => {
+  const state = load({ autoPaste: true });
+  state.vscode.window.activeTerminal.show = () => state.vscode.env.clipboard.writeText('new user text');
+  await state.commands.get('code-to-console.pasteContext')();
+  assert.equal(state.clipboard(), 'new user text');
+  assert.equal(state.events.filter(event => event.command).length, 0);
+  assert.match(state.errors[0], /clipboard changed before paste/);
+});
+
+test('a terminal switch during the clipboard read cannot redirect automatic paste', async () => {
+  const state = load({ autoPaste: true });
+  state.vscode.env.clipboard.readText = async () => {
+    state.vscode.window.activeTerminal = {};
+    return state.clipboard();
+  };
+  await state.commands.get('code-to-console.pasteContext')();
+  assert.equal(state.events.filter(event => event.command).length, 0);
+  assert.match(state.errors[0], /active terminal changed before paste/);
 });

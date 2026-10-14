@@ -79,6 +79,9 @@ async function prepareContext() {
   }
   preparing = true;
   try {
+    const autoPaste = vscode.workspace
+      .getConfiguration('codeToConsole')
+      .get('autoPasteContext', false) === true;
     const text = await buildContext(
       vscode.window.activeTextEditor,
       vscode.window.tabGroups.activeTabGroup.activeTab
@@ -88,6 +91,16 @@ async function prepareContext() {
     ensureTerminal(terminal);
     await focusTerminal(terminal);
     ensureTerminal(terminal);
+    if (autoPaste) {
+      if (await vscode.env.clipboard.readText() !== text) {
+        throw new Error('The clipboard changed before paste. Try again.');
+      }
+      ensureTerminal(terminal);
+      if (vscode.window.activeTerminal !== terminal) {
+        throw new Error('The active terminal changed before paste. Try again.');
+      }
+      await vscode.commands.executeCommand('workbench.action.terminal.paste');
+    }
   } catch (error) {
     vscode.window.showErrorMessage(`Code to Console: ${error.message}`);
   } finally {
