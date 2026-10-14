@@ -26,7 +26,7 @@ function activate(context) {
     100
   );
 
-  statusBar.name = 'Terminal in Editor';
+  statusBar.name = 'Code to Console';
   statusBar.text = '$(terminal) Terminal';
   statusBar.tooltip = 'Open Terminal in Editor';
   statusBar.command = COMMAND_ID;

@@ -1,4 +1,4 @@
-# Terminal in Editor
+# Code to Console
 
 Put your integrated terminal in an editor tab with one click. Keep it beside
 your code, split it into another editor group, or give it the full editor area.
@@ -24,5 +24,5 @@ Uses VS Code's built-in terminal. No settings or extra dependencies.
 
 ## Install
 
-Search for **Terminal in Editor** by **Talha Khalil** in VS Code's Extensions
+Search for **Code to Console** by **Talha Khalil** in VS Code's Extensions
 view. Requires VS Code 1.109.0 or later.

@@ -1,6 +1,6 @@
 {
-  "name": "terminal-in-editor",
-  "displayName": "Terminal in Editor",
+  "name": "code-to-console",
+  "displayName": "Code to Console",
   "description": "Opens the integrated terminal in the editor area from the status bar or Command Palette.",
   "version": "0.2.0",
   "publisher": "TalhaKhalil",
