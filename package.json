@@ -1,8 +1,8 @@
 {
   "name": "code-to-console",
   "displayName": "Code to Console",
-  "description": "Opens the integrated terminal in the editor area from the status bar or Command Palette.",
-  "version": "0.2.0",
+  "description": "Copy file and diff context to your terminal agent, and open the terminal beside your code.",
+  "version": "0.3.0",
   "publisher": "TalhaKhalil",
   "repository": {
     "type": "git",
@@ -26,7 +26,10 @@
   "keywords": [
     "terminal",
     "editor",
-    "status bar"
+    "status bar",
+    "context",
+    "diff",
+    "agent"
   ],
   "activationEvents": [
     "onStartupFinished",
@@ -38,10 +41,49 @@
       {
         "command": "terminal-in-editor.attach",
         "title": "Terminal: Attach to Editor"
+      },
+      {
+        "command": "code-to-console.copyContext",
+        "title": "Copy Context",
+        "category": "Code to Console"
+      },
+      {
+        "command": "code-to-console.pasteContext",
+        "title": "Paste Context to Terminal",
+        "category": "Code to Console",
+        "icon": "$(terminal)"
       }
-    ]
+    ],
+    "keybindings": [
+      {
+        "command": "code-to-console.pasteContext",
+        "key": "ctrl+l",
+        "mac": "cmd+l",
+        "when": "editorTextFocus"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "code-to-console.pasteContext",
+          "when": "resourceScheme == file || resourceScheme == vscode-remote || resourceScheme == git || resourceScheme == git-graph || resourceScheme == untitled",
+          "group": "navigation@20"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "code-to-console.copyContext",
+          "group": "9_cutcopypaste@20"
+        },
+        {
+          "command": "code-to-console.pasteContext",
+          "group": "9_cutcopypaste@21"
+        }
+      ]
+    }
   },
   "scripts": {
-    "check": "node --check extension.js"
+    "check": "node --check extension.js && node --check context.js",
+    "test": "node --test test/*.test.js"
   }
 }

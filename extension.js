@@ -1,6 +1,44 @@
 const vscode = require('vscode');
+const { buildContext } = require('./context');
 
 const COMMAND_ID = 'terminal-in-editor.attach';
+const COPY_COMMAND_ID = 'code-to-console.copyContext';
+const PASTE_COMMAND_ID = 'code-to-console.pasteContext';
+let pasting = false;
+
+function ensureTerminal(terminal) {
+  if (!vscode.window.terminals.includes(terminal) || terminal.exitStatus !== undefined) {
+    throw new Error('The target terminal closed. Open your agent terminal and try again.');
+  }
+}
+
+async function focusTerminal(terminal) {
+  terminal.show();
+  if (vscode.window.activeTerminal === terminal) {
+    return;
+  }
+  await new Promise((resolve, reject) => {
+    const change = vscode.window.onDidChangeActiveTerminal(active => {
+      if (active === terminal) {
+        finish(resolve);
+      }
+    });
+    const close = vscode.window.onDidCloseTerminal(closed => {
+      if (closed === terminal) {
+        finish(() => reject(new Error('The target terminal closed before paste.')));
+      }
+    });
+    const timer = setTimeout(() => {
+      finish(() => reject(new Error('Could not focus the target terminal. Try again.')));
+    }, 3000);
+    function finish(callback) {
+      clearTimeout(timer);
+      change.dispose();
+      close.dispose();
+      callback();
+    }
+  });
+}
 
 async function attachTerminalToEditor() {
   if (vscode.window.activeTerminal) {
@@ -13,6 +51,61 @@ async function attachTerminalToEditor() {
   vscode.window
     .createTerminal({ location: vscode.TerminalLocation.Editor })
     .show();
+}
+
+async function copyContext() {
+  try {
+    const text = await buildContext(
+      vscode.window.activeTextEditor,
+      vscode.window.tabGroups.activeTabGroup.activeTab
+    );
+    await vscode.env.clipboard.writeText(text);
+    vscode.window.setStatusBarMessage('Code to Console: context copied', 3000);
+  } catch (error) {
+    vscode.window.showErrorMessage(`Code to Console: ${error.message}`);
+  }
+}
+
+async function pasteContext() {
+  if (pasting) {
+    return;
+  }
+  const terminal = vscode.window.activeTerminal;
+  if (!terminal) {
+    vscode.window.showErrorMessage(
+      'Code to Console: open your agent in an integrated terminal first.'
+    );
+    return;
+  }
+  pasting = true;
+  let previousClipboard;
+  let text;
+  try {
+    text = await buildContext(
+      vscode.window.activeTextEditor,
+      vscode.window.tabGroups.activeTabGroup.activeTab
+    );
+    ensureTerminal(terminal);
+    previousClipboard = await vscode.env.clipboard.readText();
+    ensureTerminal(terminal);
+    await vscode.env.clipboard.writeText(text);
+    ensureTerminal(terminal);
+    await focusTerminal(terminal);
+    ensureTerminal(terminal);
+    await vscode.commands.executeCommand('workbench.action.terminal.paste');
+  } catch (error) {
+    vscode.window.showErrorMessage(`Code to Console: ${error.message}`);
+  } finally {
+    try {
+      if (previousClipboard !== undefined && await vscode.env.clipboard.readText() === text) {
+        await vscode.env.clipboard.writeText(previousClipboard);
+      }
+    } catch (error) {
+      vscode.window.showErrorMessage(`Code to Console: could not restore the clipboard: ${error.message}`);
+    } finally {
+      pasting = false;
+    }
+  }
 }
 
 function activate(context) {
@@ -32,7 +125,12 @@ function activate(context) {
   statusBar.command = COMMAND_ID;
   statusBar.show();
 
-  context.subscriptions.push(command, statusBar);
+  context.subscriptions.push(
+    command,
+    statusBar,
+    vscode.commands.registerCommand(COPY_COMMAND_ID, copyContext),
+    vscode.commands.registerCommand(PASTE_COMMAND_ID, pasteContext)
+  );
 }
 
 function deactivate() {}
