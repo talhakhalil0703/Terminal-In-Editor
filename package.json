@@ -4,6 +4,14 @@
   "description": "Opens the integrated terminal in the editor area from the status bar or Command Palette.",
   "version": "0.2.0",
   "publisher": "TalhaKhalil",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/talhakhalil0703/Terminal-In-Editor.git"
+  },
+  "homepage": "https://github.com/talhakhalil0703/Terminal-In-Editor#readme",
+  "bugs": {
+    "url": "https://github.com/talhakhalil0703/Terminal-In-Editor/issues"
+  },
   "license": "MIT",
   "icon": "media/icon.png",
   "extensionKind": [
@@ -14,6 +22,11 @@
   },
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "terminal",
+    "editor",
+    "status bar"
   ],
   "activationEvents": [
     "onStartupFinished",
