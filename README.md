@@ -2,17 +2,18 @@
 
 Put your integrated terminal in an editor tab with one click. Keep it beside
 your code, split it into another editor group, or give it the full editor area.
-Send file and diff references to an agent running in that terminal.
+Copy file and diff references for an agent running in that terminal.
 
 ## Send context
 
 Open your agent in a VS Code integrated terminal, then return to your code.
 Select some lines or place the cursor, and press **Cmd+L** on macOS
-(**Ctrl+L** on Windows/Linux). The context is pasted into the most recently
-active terminal, which receives focus. The extension does not add Enter.
+(**Ctrl+L** on Windows/Linux). The context is copied to the clipboard and the
+most recently active terminal receives focus. Paste using your terminal's
+normal shortcut (**Cmd+V** on macOS), then submit when ready.
 
 You can also click the terminal icon in the editor title, use the editor's
-right-click menu, or run **Code to Console: Paste Context to Terminal**.
+right-click menu, or run **Code to Console: Copy Context and Focus Terminal**.
 **Code to Console: Copy Context** copies the same text to the clipboard.
 
 A regular file includes its repository, path, and selected lines:
@@ -41,15 +42,10 @@ revision metadata is unavailable. Unsaved selections include their actual text;
 with no selection, they include the current line. Paths follow the editor's
 host, including Remote SSH.
 
-Use an agent that supports multiline paste, such as Pi in Herdr. VS Code's
-normal terminal paste handling applies, including its multiline warning when
-appropriate. Pasting temporarily uses the text clipboard and restores it if
-it has not changed; non-text clipboard formats are not preserved.
-
 ### Rebind the shortcut
 
 Open **Preferences: Open Keyboard Shortcuts** and search for
-**Code to Console: Paste Context to Terminal**. Change or remove its binding,
+**Code to Console: Copy Context and Focus Terminal**. Change or remove its binding,
 or assign one to **Code to Console: Copy Context**.
 
 The default replaces Select Line while the text editor has focus. To choose

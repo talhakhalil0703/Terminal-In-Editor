@@ -10,8 +10,13 @@ function load(options = {}) {
   const events = [];
   let clipboard = 'previous clipboard';
   const terminal = {
-    show: () => events.push('focus terminal'),
-    sendText: () => assert.fail('Paste must use native paste handling'),
+    show() {
+      events.push('focus terminal');
+      if (options.failFocus) {
+        throw new Error('focus failed');
+      }
+    },
+    sendText: () => assert.fail('Preparing context must not send terminal input'),
   };
   const vscode = {
     window: {
@@ -29,9 +34,6 @@ function load(options = {}) {
       registerCommand: (id, callback) => { commands.set(id, callback); return {}; },
       async executeCommand(id) {
         events.push({ command: id, text: clipboard });
-        if (options.paste) {
-          await options.paste(value => { clipboard = value; });
-        }
       },
     },
     env: {
@@ -56,13 +58,12 @@ function load(options = {}) {
   return { commands, events, errors, vscode, clipboard: () => clipboard };
 }
 
-test('paste uses native terminal paste with the whole context and restores text clipboard', async () => {
+test('preparing context copies it and focuses the terminal without pasting', async () => {
   const state = load();
   await state.commands.get('code-to-console.pasteContext')();
   assert.equal(state.events[0], 'focus terminal');
-  assert.equal(state.events[1].command, 'workbench.action.terminal.paste');
-  assert.equal(state.events[1].text, 'context\nsecond line');
-  assert.equal(state.clipboard(), 'previous clipboard');
+  assert.equal(state.events.length, 1);
+  assert.equal(state.clipboard(), 'context\nsecond line');
   assert.equal(state.errors.length, 0);
 });
 
@@ -82,32 +83,30 @@ test('no terminal produces an error without creating one or touching the clipboa
   assert.equal(state.events.length, 0);
 });
 
-test('a clipboard change during paste is preserved', async () => {
-  const state = load({ paste: async setClipboard => setClipboard('new user clipboard') });
+test('a focus failure leaves the copied context available for manual paste', async () => {
+  const state = load({ failFocus: true });
   await state.commands.get('code-to-console.pasteContext')();
-  assert.equal(state.clipboard(), 'new user clipboard');
+  assert.equal(state.clipboard(), 'context\nsecond line');
+  assert.match(state.errors[0], /focus failed/);
 });
 
-test('paste failure restores the clipboard and reports the error', async () => {
-  const state = load({ paste: async () => { throw new Error('paste failed'); } });
-  await state.commands.get('code-to-console.pasteContext')();
-  assert.equal(state.clipboard(), 'previous clipboard');
-  assert.match(state.errors[0], /paste failed/);
-});
-
-test('repeated paste shortcuts do not interleave clipboard transfers', async () => {
+test('repeated shortcuts do not interleave context preparation', async () => {
   let finish;
-  const state = load({ paste: () => new Promise(resolve => { finish = resolve; }) });
+  let builds = 0;
+  const state = load({ build: () => {
+    builds++;
+    return new Promise(resolve => { finish = resolve; });
+  } });
   const first = state.commands.get('code-to-console.pasteContext')();
-  while (!finish) await new Promise(resolve => setImmediate(resolve));
   await state.commands.get('code-to-console.pasteContext')();
-  finish();
+  finish('context');
   await first;
-  assert.equal(state.events.filter(event => event.command).length, 1);
-  assert.equal(state.clipboard(), 'previous clipboard');
+  assert.equal(builds, 1);
+  assert.equal(state.events.filter(event => event.command).length, 0);
+  assert.equal(state.clipboard(), 'context');
 });
 
-test('a terminal closing while context is built cannot redirect paste to another shell', async () => {
+test('a terminal closing while context is built cannot redirect focus to another shell', async () => {
   let finish;
   const state = load({ build: () => new Promise(resolve => { finish = resolve; }) });
   const paste = state.commands.get('code-to-console.pasteContext')();

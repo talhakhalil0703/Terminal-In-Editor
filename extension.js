@@ -3,8 +3,8 @@ const { buildContext } = require('./context');
 
 const COMMAND_ID = 'terminal-in-editor.attach';
 const COPY_COMMAND_ID = 'code-to-console.copyContext';
-const PASTE_COMMAND_ID = 'code-to-console.pasteContext';
-let pasting = false;
+const PREPARE_COMMAND_ID = 'code-to-console.pasteContext';
+let preparing = false;
 
 function ensureTerminal(terminal) {
   if (!vscode.window.terminals.includes(terminal) || terminal.exitStatus !== undefined) {
@@ -25,7 +25,7 @@ async function focusTerminal(terminal) {
     });
     const close = vscode.window.onDidCloseTerminal(closed => {
       if (closed === terminal) {
-        finish(() => reject(new Error('The target terminal closed before paste.')));
+        finish(() => reject(new Error('The target terminal closed before focus.')));
       }
     });
     const timer = setTimeout(() => {
@@ -66,8 +66,8 @@ async function copyContext() {
   }
 }
 
-async function pasteContext() {
-  if (pasting) {
+async function prepareContext() {
+  if (preparing) {
     return;
   }
   const terminal = vscode.window.activeTerminal;
@@ -77,34 +77,21 @@ async function pasteContext() {
     );
     return;
   }
-  pasting = true;
-  let previousClipboard;
-  let text;
+  preparing = true;
   try {
-    text = await buildContext(
+    const text = await buildContext(
       vscode.window.activeTextEditor,
       vscode.window.tabGroups.activeTabGroup.activeTab
     );
-    ensureTerminal(terminal);
-    previousClipboard = await vscode.env.clipboard.readText();
     ensureTerminal(terminal);
     await vscode.env.clipboard.writeText(text);
     ensureTerminal(terminal);
     await focusTerminal(terminal);
     ensureTerminal(terminal);
-    await vscode.commands.executeCommand('workbench.action.terminal.paste');
   } catch (error) {
     vscode.window.showErrorMessage(`Code to Console: ${error.message}`);
   } finally {
-    try {
-      if (previousClipboard !== undefined && await vscode.env.clipboard.readText() === text) {
-        await vscode.env.clipboard.writeText(previousClipboard);
-      }
-    } catch (error) {
-      vscode.window.showErrorMessage(`Code to Console: could not restore the clipboard: ${error.message}`);
-    } finally {
-      pasting = false;
-    }
+    preparing = false;
   }
 }
 
@@ -129,7 +116,7 @@ function activate(context) {
     command,
     statusBar,
     vscode.commands.registerCommand(COPY_COMMAND_ID, copyContext),
-    vscode.commands.registerCommand(PASTE_COMMAND_ID, pasteContext)
+    vscode.commands.registerCommand(PREPARE_COMMAND_ID, prepareContext)
   );
 }
 
